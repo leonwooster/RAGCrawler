@@ -1,10 +1,20 @@
+import sys
+import os
+
+# Configure SQLite for ChromaDB
+if 'STREAMLIT_SHARING' in os.environ:  # Check if running on Streamlit Cloud
+    try:
+        __import__('pysqlite3')
+        sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+    except ImportError:
+        pass
+
 import streamlit as st
 import asyncio
 from src.services.crawler_service import CrawlerService
 from src.services.vector_store_service import VectorStoreService
 from src.services.rag_service import RAGService
 from src.models.database import init_db, CrawlHistory
-import os
 
 # Initialize services
 crawler_service = CrawlerService()

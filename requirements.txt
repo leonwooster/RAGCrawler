@@ -9,6 +9,7 @@ openai>=1.0.0
 # Database
 sqlalchemy>=2.0.0
 aiosqlite>=0.19.0
+pysqlite3-binary @ git+https://github.com/nalgeon/sqlean/releases/download/0.21.5/pysqlite3-binary-0.5.2.tar.gz
 
 # Vector Store
 chromadb>=0.4.0
