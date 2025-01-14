@@ -1,2 +1,4 @@
 .log
 .env
+vector_store/*
+!vector_store/.gitkeep

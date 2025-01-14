@@ -1,24 +1,14 @@
-import sys
-import os
-
-# Configure SQLite for ChromaDB
-if 'STREAMLIT_SHARING' in os.environ:  # Check if running on Streamlit Cloud
-    try:
-        __import__('pysqlite3')
-        sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-    except ImportError:
-        pass
-
 import streamlit as st
 import asyncio
 from src.services.crawler_service import CrawlerService
 from src.services.vector_store_service import VectorStoreService
 from src.services.rag_service import RAGService
 from src.models.database import init_db, CrawlHistory
+import os
 
 # Initialize services
 crawler_service = CrawlerService()
-vector_store_service = VectorStoreService()
+vector_store_service = VectorStoreService()  # This will now try to load existing vector store
 
 # Initialize database
 db_session = init_db()
@@ -26,9 +16,13 @@ db_session = init_db()
 def initialize_rag_service():
     """Initialize RAG service if vector store exists and return it"""
     if vector_store_service.vector_store is not None:
-        rag_service = RAGService(vector_store_service)
-        rag_service.initialize_chain()  # Initialize the chain immediately
-        return rag_service
+        try:
+            rag_service = RAGService(vector_store_service)
+            rag_service.initialize_chain()  # Initialize the chain immediately
+            return rag_service
+        except Exception as e:
+            st.error(f"Error initializing RAG service: {str(e)}")
+            return None
     return None
 
 def main():
@@ -98,16 +92,26 @@ def main():
     with tab2:
         st.header("Chat with Your Documents")
         
-        # Display chat messages
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.write(message["content"])
-                if "sources" in message:
-                    with st.expander("Sources"):
-                        for source in message["sources"]:
-                            st.write(f"- {source}")
-
-        # Chat input
+        # Add a button to clear chat history at the top
+        if st.button("Clear Chat History"):
+            st.session_state.messages = []
+            st.session_state.chat_history = []
+            st.rerun()
+        
+        # Container for chat messages
+        chat_container = st.container()
+        
+        # Display all messages in the container
+        with chat_container:
+            for message in st.session_state.messages:
+                with st.chat_message(message["role"]):
+                    st.write(message["content"])
+                    if "sources" in message:
+                        with st.expander("Sources"):
+                            for source in message["sources"]:
+                                st.write(f"- {source}")
+        
+        # Chat input at the bottom
         if query := st.chat_input("Ask a question about the crawled content"):
             if not os.getenv("OPENAI_API_KEY"):
                 st.warning("Please enter your OpenAI API key in the sidebar first!")
@@ -119,65 +123,63 @@ def main():
 
             # Add user message to chat history
             st.session_state.messages.append({"role": "user", "content": query})
-            with st.chat_message("user"):
-                st.write(query)
+            
+            # Display user message
+            with chat_container:
+                with st.chat_message("user"):
+                    st.write(query)
 
-            # Generate response
-            with st.chat_message("assistant"):
-                try:
-                    with st.spinner("Thinking..."):
-                        # Get response with context from chat history
-                        context = "\n".join([
-                            f"{msg['role']}: {msg['content']}" 
-                            for msg in st.session_state.chat_history[-3:]  # Use last 3 messages for context
-                        ])
-                        
-                        # Combine context with current query
-                        contextualized_query = f"""
-                        Previous conversation:
-                        {context}
-                        
-                        Current question: {query}
-                        
-                        Please provide a response that takes into account the conversation history.
-                        """
-                        
-                        response = st.session_state.rag_service.query(contextualized_query)
-                        
-                        # Display the response
-                        st.write(response["answer"])
-                        
-                        # Store sources
-                        sources = [doc.metadata['url'] for doc in response["source_documents"]]
-                        with st.expander("Sources"):
-                            for source in sources:
-                                st.write(f"- {source}")
-                        
-                        # Add assistant response to chat history
-                        st.session_state.messages.append({
-                            "role": "assistant",
-                            "content": response["answer"],
-                            "sources": sources
-                        })
-                        
-                        # Update chat history for context
-                        st.session_state.chat_history.append({
-                            "role": "user",
-                            "content": query
-                        })
-                        st.session_state.chat_history.append({
-                            "role": "assistant",
-                            "content": response["answer"]
-                        })
+            # Generate and display assistant response
+            with chat_container:
+                with st.chat_message("assistant"):
+                    try:
+                        with st.spinner("Thinking..."):
+                            # Get response with context from chat history
+                            context = "\n".join([
+                                f"{msg['role']}: {msg['content']}" 
+                                for msg in st.session_state.chat_history[-3:]  # Use last 3 messages for context
+                            ])
+                            
+                            # Combine context with current query
+                            contextualized_query = f"""
+                            Previous conversation:
+                            {context}
+                            
+                            Current question: {query}
+                            
+                            Please provide a response that takes into account the conversation history.
+                            """
+                            
+                            response = st.session_state.rag_service.query(contextualized_query)
+                            
+                            # Display the response
+                            st.write(response["answer"])
+                            
+                            # Store sources
+                            sources = [doc.metadata['url'] for doc in response["source_documents"]]
+                            with st.expander("Sources"):
+                                for source in sources:
+                                    st.write(f"- {source}")
+                            
+                            # Add assistant response to chat history
+                            st.session_state.messages.append({
+                                "role": "assistant",
+                                "content": response["answer"],
+                                "sources": sources
+                            })
+                            
+                            # Update chat history for context
+                            st.session_state.chat_history.append({
+                                "role": "user",
+                                "content": query
+                            })
+                            st.session_state.chat_history.append({
+                                "role": "assistant",
+                                "content": response["answer"]
+                            })
 
-                except Exception as e:
-                    st.error(f"Error during search: {str(e)}")
-
-        # Add a button to clear chat history
-        if st.button("Clear Chat History"):
-            st.session_state.messages = []
-            st.session_state.chat_history = []
-            st.rerun()
+                    except Exception as e:
+                        st.error(f"Error during search: {str(e)}")
     
     # History Section
     with tab3:
