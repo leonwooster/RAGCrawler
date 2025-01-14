@@ -1,0 +1,31 @@
+# Core dependencies
+streamlit>=1.27.0
+langchain>=0.0.300
+langchain-community>=0.0.10
+langchain-openai>=0.0.2
+langchain-chroma>=0.0.2
+openai>=1.0.0
+
+# Database
+sqlalchemy>=2.0.0
+aiosqlite>=0.19.0
+
+# Vector Store
+chromadb>=0.4.0
+tiktoken>=0.5.0
+
+# Web Crawling
+beautifulsoup4>=4.12.0
+aiohttp>=3.8.0
+requests>=2.31.0
+urllib3>=2.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+rich>=13.0.0
+
+# Optional but recommended
+pytest>=7.0.0  # For testing
+black>=23.0.0  # For code formatting
+isort>=5.12.0  # For import sorting 

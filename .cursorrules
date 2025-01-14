@@ -1,0 +1,20 @@
+1. Try to use proper design patterns and best practices as much as possible.
+2. Ensure comprehensive error handling and logging.
+3. Use meaningful variable and function names.
+4. Keep functions small and focused (single responsibility).
+5. Use type hints and enforce them with mypy.
+6. Keep dependencies minimal and manage them through dependency injection.
+7. Use async/await for I/O-bound operations.
+8. Ensure comprehensive testing and documentation.
+9. Follow Python best practices for code readability and maintainability.
+10. Use rich for colored console output.
+11. Use pydantic for data validation and type hinting.
+12. Use python-dotenv for environment variable management.
+13. Use aiohttp for async HTTP requests.
+14. Use requests for HTTP requests.
+15. Use urllib3 for HTTP requests.
+16. Use beautifulsoup4 for HTML parsing.
+17. Use chromadb for vector storage.
+18. Use tiktoken for tokenization.
+19. Use sqlalchemy for database operations.
+20. Use aiosqlite for async database operations.
