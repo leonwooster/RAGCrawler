@@ -5,6 +5,7 @@ from src.services.vector_store_service import VectorStoreService
 from src.services.rag_service import RAGService
 from src.models.database import init_db, CrawlHistory
 import os
+import time
 
 # Initialize services
 crawler_service = CrawlerService()
@@ -24,6 +25,15 @@ def initialize_rag_service():
             st.error(f"Error initializing RAG service: {str(e)}")
             return None
     return None
+
+def show_crawl_progress(url: str, max_pages: int):
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+    
+    for i in range(max_pages):
+        progress_bar.progress((i + 1) / max_pages)
+        status_text.text(f"Crawling page {i + 1} of {max_pages}")
+        time.sleep(0.1)  # Simulate progress
 
 def main():
     # Initialize session state variables

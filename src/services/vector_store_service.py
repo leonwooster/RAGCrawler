@@ -52,10 +52,7 @@ class VectorStoreService:
         if self.vector_store:
             try:
                 os.makedirs('vector_store', exist_ok=True)
-                self.vector_store.save_local(
-                    'vector_store',
-                    allow_dangerous_deserialization=True  # We trust our own saved data
-                )
+                self.vector_store.save_local('vector_store')  # Removed allow_dangerous_deserialization
                 logger.info("Vector store saved successfully")
             except Exception as e:
                 logger.error(f"Error saving vector store: {str(e)}")
@@ -68,7 +65,7 @@ class VectorStoreService:
                 vector_store = FAISS.load_local(
                     'vector_store',
                     self.embeddings,
-                    allow_dangerous_deserialization=True  # We trust our own saved data
+                    allow_dangerous_deserialization=True  # Only needed for loading
                 )
                 logger.info("Vector store loaded successfully")
                 return vector_store
